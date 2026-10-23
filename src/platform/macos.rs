@@ -87,6 +87,7 @@ use std::os::raw::c_void;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+use crate::cursor::{BadImage, CustomCursor, CustomCursorSource};
 use crate::event_loop::{ActiveEventLoop, EventLoopBuilder};
 use crate::monitor::MonitorHandle;
 use crate::window::{Window, WindowAttributes};
@@ -507,6 +508,42 @@ impl ActiveEventLoopExtMacOS for ActiveEventLoop {
 
     fn allows_automatic_window_tabbing(&self) -> bool {
         self.p.allows_automatic_window_tabbing()
+    }
+}
+
+/// Additional methods on [`CustomCursor`] that are specific to macOS.
+pub trait CustomCursorExtMacOS {
+    /// Creates a new cursor from an rgba buffer drawn at `scale` pixels per point, such as the
+    /// window's [`scale_factor`](crate::window::Window::scale_factor).
+    ///
+    /// [`CustomCursor::from_rgba`] shows one image pixel per point, so an image drawn for a
+    /// Retina screen comes out twice the size. Here the cursor is `width / scale` by
+    /// `height / scale` points, and the hotspot, given in pixels like the size, is divided the
+    /// same way. A `scale` that isn't positive and finite counts as 1.
+    ///
+    /// The alpha channel is assumed to be **not** premultiplied.
+    fn from_rgba_with_scale(
+        rgba: impl Into<Vec<u8>>,
+        width: u16,
+        height: u16,
+        hotspot_x: u16,
+        hotspot_y: u16,
+        scale: f64,
+    ) -> Result<CustomCursorSource, BadImage>;
+}
+
+impl CustomCursorExtMacOS for CustomCursor {
+    fn from_rgba_with_scale(
+        rgba: impl Into<Vec<u8>>,
+        width: u16,
+        height: u16,
+        hotspot_x: u16,
+        hotspot_y: u16,
+        scale: f64,
+    ) -> Result<CustomCursorSource, BadImage> {
+        let mut source = CustomCursor::from_rgba(rgba, width, height, hotspot_x, hotspot_y)?;
+        source.inner.0.scale = if scale.is_finite() && scale > 0.0 { scale } else { 1.0 };
+        Ok(source)
     }
 }
 

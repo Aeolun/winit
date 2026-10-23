@@ -207,6 +207,9 @@ pub(crate) struct CursorImage {
     pub(crate) height: u16,
     pub(crate) hotspot_x: u16,
     pub(crate) hotspot_y: u16,
+    /// Image pixels per point. Only macOS reads it (see `CustomCursorExtMacOS`); every other
+    /// platform already shows the image one pixel per physical pixel.
+    pub(crate) scale: f64,
 }
 
 impl CursorImage {
@@ -240,7 +243,7 @@ impl CursorImage {
             return Err(BadImage::HotspotOutOfBounds { width, height, hotspot_x, hotspot_y });
         }
 
-        Ok(CursorImage { rgba, width, height, hotspot_x, hotspot_y })
+        Ok(CursorImage { rgba, width, height, hotspot_x, hotspot_y, scale: 1.0 })
     }
 }
 

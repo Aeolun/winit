@@ -50,12 +50,15 @@ pub(crate) fn cursor_from_image(cursor: &CursorImage) -> Retained<NSCursor> {
     let bitmap_data = unsafe { slice::from_raw_parts_mut(bitmap.bitmapData(), cursor.rgba.len()) };
     bitmap_data.copy_from_slice(&cursor.rgba);
 
-    let image = unsafe {
-        NSImage::initWithSize(NSImage::alloc(), NSSize::new(width.into(), height.into()))
-    };
+    // A scale of 2 makes a 64-pixel image a 32-point cursor, drawn sharp on a Retina screen.
+    let scale = cursor.scale;
+    let size = NSSize::new(f64::from(width) / scale, f64::from(height) / scale);
+    unsafe { bitmap.setSize(size) };
+    let image = unsafe { NSImage::initWithSize(NSImage::alloc(), size) };
     unsafe { image.addRepresentation(&bitmap) };
 
-    let hotspot = NSPoint::new(cursor.hotspot_x as f64, cursor.hotspot_y as f64);
+    let hotspot =
+        NSPoint::new(f64::from(cursor.hotspot_x) / scale, f64::from(cursor.hotspot_y) / scale);
 
     NSCursor::initWithImage_hotSpot(NSCursor::alloc(), &image, hotspot)
 }

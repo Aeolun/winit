@@ -39,3 +39,8 @@ The migration guide could reference other migration examples in the current
 changelog entry.
 
 ## Unreleased
+
+### Added
+
+- On macOS, add `CustomCursorExtMacOS::from_rgba_with_scale`, so a custom cursor drawn for a
+  Retina screen is shown at its size in points and sharp.
